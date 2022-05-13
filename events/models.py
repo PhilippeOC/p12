@@ -16,7 +16,7 @@ class Contract(TimeStamp):
     client = models.ForeignKey("users.Client", on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"Contract id: {self.pk}"
+        return f"Contract : {self.pk}"
 
 
 class Event(TimeStamp):
@@ -25,7 +25,7 @@ class Event(TimeStamp):
     client = models.ForeignKey("users.Client", on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"Event id: {self.pk}"
+        return f"Event : {self.pk}"
 
 
 class Association(TimeStamp):
@@ -38,10 +38,19 @@ class Association(TimeStamp):
 class ClientAssociation(Association):
     client = models.ForeignKey("users.Client", on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f"client association: {self.pk}"
+
 
 class ContractAssociation(Association):
     contract = models.ForeignKey("Contract", on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f"contract association: {self.pk}"
+
 
 class EventAssociation(Association):
     event = models.ForeignKey("Event", on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return f"event association: {self.pk}"

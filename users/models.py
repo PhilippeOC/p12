@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 
 from events.models import ClientAssociation, ContractAssociation, EventAssociation
+import uuid
 
 
 class Person(models.Model):
@@ -13,6 +14,13 @@ class Person(models.Model):
 
     class Meta:
         abstract = True
+
+    def anonymize(self):
+        self.first_name = '***'
+        self.last_name = '***'
+        self.phone = '***'
+        self.mobile = '***'
+        self.email = str(uuid.uuid4().hex) + '@anonymize.com'
 
 
 class EmployeeManager(BaseUserManager):
@@ -68,10 +76,37 @@ class Employee(AbstractBaseUser, PermissionsMixin, Person):
     def __str__(self):
         return f"Employee id: {self.pk}"
 
+    def get_employee_role(self):
+        employee = Employee.objects.filter(pk=self)
+        if not employee:
+            return None
+        return employee.first().role
+
+    def is_anonymize(self):
+        """ retourne True si l'employé est anonyme """
+        employee = Employee.objects.filter(pk=self)
+        if not employee.first().is_staff:
+            return True
+        return False
+
+    def anonymize(self):
+        super().anonymize()
+        self.password = '***'
+        self.is_active = False
+        self.is_staff = False
+        self.is_superuser = False
+        return self
+
 
 class Client(Person):
     company_name = models.CharField(max_length=250)
     is_client = models.BooleanField(default=False)
+
+    def anonymize(self):
+        super().anonymize()
+        self.company_name = '***'
+        self.is_client = False
+        return self
 
     def __str__(self):
         return f"Client id: {self.pk}"

@@ -1,20 +1,22 @@
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
 
 from users.views import ClientCrud, EmployeeCrud
 from events.views import (ClientEmployee,
-                          ContractCrud,
+                          ContractCru,
                           ContractEmployee,
-                          EventRud,
+                          EventRu,
                           EventEmployee)
 
 
 router = DefaultRouter()
 router.register('employees', EmployeeCrud, basename="employees")
 router.register('clients', ClientCrud,  basename="clients")
-router.register('contracts', ContractCrud, basename="contracts")
-router.register('events', EventRud, basename="events")
+router.register('contracts', ContractCru, basename="contracts")
+router.register('events', EventRu, basename="events")
 
 router_contracts = DefaultRouter()
 router_contracts.register('assignees', ContractEmployee, basename='contract_employee')
@@ -28,6 +30,8 @@ router_events.register('assignees', EventEmployee, basename='event_employee')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('', include(router.urls)),
     path('contracts/<int:pk_contract>/', include(router_contracts.urls)),
     path('clients/<int:pk_client>/', include(router_clients.urls)),
