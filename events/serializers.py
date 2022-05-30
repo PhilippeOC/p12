@@ -38,3 +38,17 @@ class EventAssociationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventAssociation
         fields = ['id', 'employee_id', 'event_id', 'date_created']
+
+
+class ReadContractSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Contract
+        fields = ['id', 'amount']
+
+
+class ReadEventSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Event
+        fields = ['id', 'event_place']

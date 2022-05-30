@@ -5,9 +5,10 @@ from users.models import Employee
 
 
 class ManagerPermissions(permissions.BasePermission):
-    """ permissions accordées aux super utilisateurs (groupe manager) """
     def has_permission(self, request, view):
-        if request.user.is_superuser:
+        if request.user.is_staff:
+            return True
+        if str(request.user.id) == view.kwargs.get('pk'):
             return True
         raise ValidationError({"message": "Accès réservé aux managers."})
 
@@ -17,7 +18,7 @@ class SupportPermissions(permissions.BasePermission):
         return True
 
     def has_object_permission(self, request, view, obj):
-        if request.user.is_superuser:
+        if request.user.is_staff:
             return True
         if not EventAssociation.objects.filter(employee_id=request.user.id, event_id=obj.id):
             raise ValidationError({"message": f"Vous n'êtes pas responsable de l'évènement {obj.id}."})
@@ -33,12 +34,12 @@ class PermissionsAccesClients(permissions.BasePermission):
                 raise ValidationError({"message": "Seuls les employés 'Business' ou 'Manager' "
                                        "peuvent ajouter ou modifier le status d'un client."})
         if request.method == 'DELETE':
-            if not request.user.is_superuser:
+            if not request.user.is_staff:
                 raise ValidationError({"message": "Accès réservé aux managers."})
         return True
 
     def has_object_permission(self, request, view, obj):
-        if request.user.is_superuser:
+        if request.user.is_staff:
             return True
         if not ClientAssociation.objects.filter(employee_id=request.user.id, client_id=obj.id):
             raise ValidationError({"message": f"Vous n'êtes pas responsable du client {obj.id}."})
@@ -47,7 +48,7 @@ class PermissionsAccesClients(permissions.BasePermission):
 
 class BusinessPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
-        if request.user.is_superuser:
+        if request.user.is_staff:
             return True
         if request.method == 'POST':
             client_id = request.data.get('client')
@@ -58,7 +59,7 @@ class BusinessPermissions(permissions.BasePermission):
         return True
 
     def has_object_permission(self, request, view, obj):
-        if request.user.is_superuser:
+        if request.user.is_staff:
             return True
         if not ContractAssociation.objects.filter(contract_id=obj.id, employee_id=request.user.id):
             raise ValidationError({"message": f"Vous n'êtes pas responsable du contrat {obj.id}."})

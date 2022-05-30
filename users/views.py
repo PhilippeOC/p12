@@ -13,6 +13,11 @@ class EmployeeCrud(viewsets.ModelViewSet):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
     permission_classes = [ManagerPermissions]
+    filterset_fields = ['role',
+                        'customers__id',
+                        'contracts__id',
+                        'events__id']
+    search_fields = ['email', 'last_name', 'first_name', 'role']
 
     def destroy(self, request, *args, **kwargs):
         """ permet de rendre anonyme un employé """
@@ -36,9 +41,11 @@ class ClientCrud(viewsets.ModelViewSet):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
     permission_classes = [PermissionsAccesClients]
+    filterset_fields = ['is_client', 'company_name']
+    search_fields = ['email', 'last_name', 'first_name', 'company_name']
 
     def partial_update(self, request, *args, **kwargs):
-        """ convertion d'un client potentiel en client existant """
+        """ conversion d'un client potentiel en client existant """
         client_object = self.get_object()
         client_object.is_client = True
         client_object.save()

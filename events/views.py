@@ -1,8 +1,11 @@
+
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 
+from django_filters import rest_framework as filters
 from django.shortcuts import get_object_or_404
+
 from datetime import date
 from collections import namedtuple
 from typing import NamedTuple
@@ -16,11 +19,34 @@ from events.models import (ClientAssociation,
 from users.models import Client, Employee
 from users.permissions import BusinessPermissions, SupportPermissions, ManagerPermissions
 
+from users.serializers import ReadClientSerializer
+
+
 from events.serializers import (ClientAssociationSerializer,
                                 ContractAssociationSerializer,
                                 ContractSerializer,
                                 EventAssociationSerializer,
-                                EventSerializer)
+                                EventSerializer,
+                                ReadContractSerializer,
+                                ReadEventSerializer)
+
+
+class ContractDateFilter(filters.FilterSet):
+    date_created = filters.IsoDateTimeFilter(field_name="date_created", lookup_expr='gte')
+    date_created = filters.IsoDateTimeFilter(field_name="date_created", lookup_expr='lte')
+
+    class Meta:
+        model = Contract
+        fields = '__all__'
+
+
+class EventDateFilter(filters.FilterSet):
+    date_created = filters.IsoDateTimeFilter(field_name="date_created", lookup_expr='gte')
+    date_created = filters.IsoDateTimeFilter(field_name="date_created", lookup_expr='lte')
+
+    class Meta:
+        model = Event
+        fields = '__all__'
 
 
 class ContractCru(viewsets.ModelViewSet):
@@ -29,6 +55,9 @@ class ContractCru(viewsets.ModelViewSet):
     queryset = Contract.objects.all()
     serializer_class = ContractSerializer
     permission_classes = [BusinessPermissions]
+    filterset_fields = ['amount', 'signature_date']
+    filterset_class = ContractDateFilter
+    search_fields = ['amount', 'client__company_name']
 
     def retrieve(self, request, *args, **kwargs):
         """ lecture du détail d'un contrat """
@@ -73,6 +102,9 @@ class EventRu(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     permission_classes = [SupportPermissions]
+    filterset_fields = ['event_place', 'date_created', 'date_end']
+    filterset_class = EventDateFilter
+    search_fields = ['event_place', 'client__company_name']
 
     def retrieve(self, request, *args, **kwargs):
         event = Event.objects.filter(id=self.kwargs['pk'])
@@ -229,11 +261,32 @@ class ClientEmployee(viewsets.ModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
-        if not ClientAssociation.objects.filter(event_id=self.kwargs['pk_client']):
+        if not ClientAssociation.objects.filter(client_id=self.kwargs['pk_client']):
             raise ValidationError({"message": f"Le client {self.kwargs['pk_client']} n'existe pas."})
         association = new_association(ClientAssociation, request, self.kwargs['pk'])
         association.save()
         return super().partial_update(request, *args, **kwargs)
+
+
+class Profil(viewsets.ModelViewSet):
+    http_method_names = ['get']
+
+    def list(self, request):
+        emp = Employee.objects.get(pk=self.request.user.id)
+        my_clients = emp.customers.all()
+        my_contracts = emp.contracts.all()
+        my_events = emp.events.all()
+        my_datas = {}
+        if 'clients' in self.request.query_params:
+            my_datas['clients'] = ReadClientSerializer(my_clients, many=True).data
+        if 'contracts' in self.request.query_params:
+            my_datas['contracts'] = ReadContractSerializer(my_contracts, many=True).data
+        if 'events' in self.request.query_params:
+            my_datas['events'] = ReadEventSerializer(my_events, many=True).data
+        return Response({'clients': my_datas.get('clients'),
+                         'contracts': my_datas.get('contracts'),
+                         'events': my_datas.get('events')},
+                        status=status.HTTP_200_OK)
 
 
 def check_if_employee_exist(request) -> NamedTuple:

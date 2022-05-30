@@ -85,7 +85,7 @@ class Employee(AbstractBaseUser, PermissionsMixin, Person):
     def is_anonymize(self):
         """ retourne True si l'employé est anonyme """
         employee = Employee.objects.filter(pk=self)
-        if not employee.first().is_staff:
+        if not employee.first().is_active:
             return True
         return False
 

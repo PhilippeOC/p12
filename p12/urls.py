@@ -9,7 +9,8 @@ from events.views import (ClientEmployee,
                           ContractCru,
                           ContractEmployee,
                           EventRu,
-                          EventEmployee)
+                          EventEmployee,
+                          Profil)
 
 
 router = DefaultRouter()
@@ -27,6 +28,8 @@ router_clients.register('assignees', ClientEmployee, basename='client_employee')
 router_events = DefaultRouter()
 router_events.register('assignees', EventEmployee, basename='event_employee')
 
+router_profil = DefaultRouter()
+router_profil.register('', Profil, basename='profil')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -36,4 +39,5 @@ urlpatterns = [
     path('contracts/<int:pk_contract>/', include(router_contracts.urls)),
     path('clients/<int:pk_client>/', include(router_clients.urls)),
     path('events/<int:pk_event>/', include(router_events.urls)),
+    path('profil/', include(router_profil.urls))
 ]
